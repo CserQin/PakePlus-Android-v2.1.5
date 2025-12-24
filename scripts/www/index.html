@@ -1,11 +1,939 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus</title>
-    </head>
-    <body>
-        PakePlus
-    </body>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>公寓管理系统 - 升级版</title>
+
+    <link rel="stylesheet" href="//unpkg.com/element-plus/dist/index.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ========== 样式部分 ========== */
+        :root {
+            --primary: #2563eb;
+            --primary-bg: #eff6ff;
+            --text-main: #1f2937;
+            --text-gray: #6b7280;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --border: #e5e7eb;
+            --radius: 12px;
+            --nav-height: 60px;
+            --spacing-page: 24px;
+        }
+
+        @media (max-width: 768px) {
+            :root {
+                --spacing-page: 16px;
+            }
+        }
+
+        body {
+            margin: 0;
+            padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 20px);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .page-container,
+        .book-page,
+        .analysis-page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-page);
+        }
+
+        /* 底部导航 */
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--nav-height);
+            background: #fff;
+            border-top: 1px solid var(--border);
+            display: flex;
+            z-index: 999;
+            padding-bottom: env(safe-area-inset-bottom);
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.03);
+        }
+
+        .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-size: 11px;
+            gap: 4px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .tab-item.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .tab-item .el-icon {
+            font-size: 22px;
+            margin-bottom: 0;
+        }
+
+        /* 卡片通用 */
+        .el-card {
+            border-radius: var(--radius) !important;
+            border: 1px solid var(--border) !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+            background: var(--bg-card);
+        }
+
+        .el-card__header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 22px;
+            color: #111827;
+        }
+
+        .subtitle {
+            margin-top: 4px;
+            color: var(--text-gray);
+            font-size: 13px;
+        }
+
+        /* 日历样式修改重点区域 */
+        .custom-calendar .el-calendar {
+            --el-calendar-border: none;
+            background: transparent;
+        }
+
+        .custom-calendar .el-calendar__header {
+            padding: 0 0 16px 0;
+            border: none;
+        }
+
+        .custom-calendar .el-calendar__body {
+            padding: 0;
+        }
+
+        .custom-calendar .el-calendar-table {
+            border: none;
+        }
+
+        .custom-calendar .el-calendar-table td {
+            border: none;
+            padding: 4px;
+        }
+
+        .custom-calendar .el-calendar-table .el-calendar-day {
+            height: 48px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .custom-calendar .el-calendar-table td:hover {
+            background-color: transparent;
+        }
+
+        /* 日期单元格样式 */
+        .date-cell {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            /* 圆形 */
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            transition: all 0.2s;
+            cursor: pointer;
+            color: var(--text-main);
+            border: 2px solid transparent;
+            /* 预留边框位置防止抖动 */
+        }
+
+        /* 今天：空心蓝圈，或者淡蓝色背景，这里根据习惯改为淡蓝，以区分“选中” */
+        .date-cell.is-today {
+            color: var(--primary);
+            font-weight: 700;
+            background: #eff6ff;
+            /* 淡蓝背景 */
+        }
+
+        /* 核心修改：选中状态改为实心蓝圆点样式 */
+        .date-cell.is-multi-selected {
+            background-color: var(--primary) !important;
+            color: #fff !important;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
+            transform: scale(1.05);
+        }
+
+        /* 数据指示点（如果有账单） */
+        .data-dot {
+            width: 4px;
+            height: 4px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            position: absolute;
+            bottom: -6px;
+        }
+
+        /* 如果选中了，下面的小点变白，否则看不清 */
+        .date-cell.is-multi-selected+.data-dot {
+            background-color: #fff;
+            bottom: 4px;
+        }
+
+        .date-cell.is-today:not(.is-multi-selected)+.data-dot {
+            bottom: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .el-col {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
+                margin-bottom: 16px;
+            }
+
+            .custom-calendar .el-calendar-table .el-calendar-day {
+                height: 40px;
+            }
+
+            .date-cell {
+                width: 32px;
+                height: 32px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app">
+        <router-view></router-view>
+        <div class="tab-bar" v-if="showTabBar">
+            <div v-for="t in tabs" :key="t.key" :class="['tab-item', { active: activeTab === t.key }]"
+                @click="switchTab(t)">
+                <el-icon>
+                    <component :is="t.icon" />
+                </el-icon>
+                <span>{{ t.title }}</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <script src="https://unpkg.com/element-plus/dist/locale/zh-cn.js"></script>
+    <script src="https://unpkg.com/dayjs/dayjs.min.js"></script>
+
+    <script type="text/x-template" id="tmpl-login">
+        <div class="login-wrapper">
+            <div class="login-box">
+                <div class="brand">
+                    <div class="logo">🏠</div>
+                    <div>
+                        <h2 style="margin:0; color:#111827;">公寓管家</h2>
+                        <p style="margin:4px 0 0; color:#6b7280; font-size:13px;">请登录以管理您的房源</p>
+                    </div>
+                </div>
+                <el-form class="login-form" size="large">
+                    <el-form-item><el-input v-model="form.username" placeholder="账号" :prefix-icon="User" /></el-form-item>
+                    <el-form-item><el-input v-model="form.password" type="password" placeholder="密码" :prefix-icon="Lock" show-password @keyup.enter="handleLogin"/></el-form-item>
+                    <el-button type="primary" class="login-btn" :loading="loading" @click="handleLogin">登 录</el-button>
+                </el-form>
+                <div class="footer">© 2025 Apartment System</div>
+            </div>
+        </div>
+    </script>
+    <style>
+        .login-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f9fafb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .login-box {
+            width: 90%;
+            max-width: 360px;
+            background: #fff;
+            padding: 32px 24px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        .brand {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            background: var(--primary-bg);
+            color: var(--primary);
+            border-radius: 12px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-btn {
+            width: 100%;
+            font-weight: 600;
+            padding: 20px 0;
+            border-radius: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 12px;
+            color: #d1d5db;
+        }
+    </style>
+
+    <script type="text/x-template" id="tmpl-orderbook">
+        <div class="book-page">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <div>
+                    <h2>入住记账</h2>
+                    <p class="subtitle">{{ dateStr }}</p>
+                </div>
+                
+                <div style="display:flex; gap:8px;">
+                    <el-button type="warning" :icon="Files" @click="openBatchDialog" round>批量记账</el-button>
+                    <el-button circle :icon="Plus" type="primary" class="hidden-md-and-up" @click="scrollToForm"></el-button>
+                </div>
+            </div>
+
+            <el-row :gutter="20">
+                <el-col :md="14" :xs="24">
+                    <el-card shadow="never" class="custom-calendar" :body-style="{ padding: '10px' }">
+                        <el-calendar v-model="selectedDate" @update:model-value="handleDateChange">
+                            <template #date-cell="{ data }">
+                                <div class="date-cell" :class="{ 'is-today': data.day === todayStr, 'is-selected': data.day === dateStr }">
+                                    {{ data.day.split('-').pop() }}
+                                </div>
+                                <div v-if="hasBill(data.day)" class="data-dot"></div>
+                            </template>
+                        </el-calendar>
+                    </el-card>
+                </el-col>
+
+                <el-col :md="10" :xs="24" id="form-section">
+                    <el-card shadow="never" class="mb-4">
+                        <template #header>
+                            <span>{{ isEdit ? '编辑账单' : '记一笔 (单天)' }}</span>
+                            <el-tag size="small" class="ml-2">{{ dateStr }}</el-tag>
+                        </template>
+                        
+                        <div style="display:flex; flex-direction:column; gap:16px;">
+                            <div>
+                                <div class="label-text">房间</div>
+                                <div style="display:flex; gap:8px;">
+                                    <el-select v-model="roomId" placeholder="选择房间" style="flex:1" filterable>
+                                        <el-option v-for="r in roomList" :key="r.id" :label="r.name" :value="r.name" />
+                                    </el-select>
+                                    <el-button :icon="Setting" @click="openRoomManager" plain></el-button>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="label-text">金额</div>
+                                <el-input-number v-model="roomPrice" :min="0" :step="10" style="width: 100%" size="large" />
+                            </div>
+
+                            <el-button type="primary" size="large" @click="submitBill" style="margin-top:8px; font-weight:600;">
+                                {{ isEdit ? '保 存' : '确 认' }}
+                            </el-button>
+                            <el-button v-if="isEdit" @click="cancelEdit" size="default" link>取消编辑</el-button>
+                        </div>
+                    </el-card>
+
+                    <el-card shadow="never">
+                        <div style="font-weight:600; margin-bottom:12px; font-size:14px;">{{ dateStr }} 明细</div>
+                        <el-table :data="bills" :show-header="false" style="width: 100%" empty-text="当日暂无账单">
+                            <el-table-column prop="roomName"><template #default="{ row }"><span style="font-weight:500;">{{ row.roomName }}</span></template></el-table-column>
+                            <el-table-column prop="sales" align="right"><template #default="{ row }"><span style="font-weight:600; color:var(--primary);">¥{{ row.sales }}</span></template></el-table-column>
+                            <el-table-column width="80" align="right">
+                                <template #default="{ row }">
+                                    <el-button link type="primary" size="small" @click="editBill(row)">改</el-button>
+                                    <el-button link type="danger" size="small" @click="removeBill(row.id)">删</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-card>
+                </el-col>
+            </el-row>
+
+            <el-drawer v-model="showBatchDialog" title="批量记账" direction="btt" size="85%" :with-header="false" destroy-on-close>
+                <div style="padding: 20px 0;">
+                    <h3 style="margin-top:0;">⚡️ 批量极速记账</h3>
+                    
+                    <el-form label-position="top" size="large">
+                        <el-form-item label="选择房间">
+                            <el-select v-model="roomId" placeholder="选择房间" style="width:100%" filterable>
+                                <el-option v-for="r in roomList" :key="r.id" :label="r.name" :value="r.name" />
+                            </el-select>
+                        </el-form-item>
+
+                        <el-form-item label="选择日期模式">
+                            <el-radio-group v-model="batchMode" size="default">
+                                <el-radio-button label="dates">多个日期 (点选)</el-radio-button>
+                                <el-radio-button label="range">连续范围 (起止)</el-radio-button>
+                            </el-radio-group>
+                        </el-form-item>
+
+                        <el-form-item label="选择日期">
+                            <el-date-picker 
+                                v-if="batchMode === 'dates'"
+                                v-model="batchDates" 
+                                type="dates" 
+                                placeholder="点击选择多个日期" 
+                                format="YYYY-MM-DD"
+                                value-format="YYYY-MM-DD"
+                                style="width: 100%" 
+                            />
+                            <el-date-picker 
+                                v-else
+                                v-model="batchRange" 
+                                type="daterange" 
+                                start-placeholder="开始日期" 
+                                end-placeholder="结束日期" 
+                                value-format="YYYY-MM-DD"
+                                style="width: 100%" 
+                            />
+                        </el-form-item>
+
+                        <el-form-item label="单日金额">
+                            <el-input-number v-model="roomPrice" :min="0" :step="10" style="width: 100%" />
+                        </el-form-item>
+                    </el-form>
+
+                    <div style="background:#f9fafb; padding:12px; border-radius:8px; margin-bottom:20px;" v-if="batchCount > 0">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                            <span style="color:#6b7280;">已选天数</span>
+                            <span style="font-weight:600;">{{ batchCount }} 天</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:16px;">
+                            <span style="color:#6b7280;">预计总额</span>
+                            <span style="color:var(--primary); font-weight:700;">¥ {{ batchCount * roomPrice }}</span>
+                        </div>
+                    </div>
+
+                    <el-button type="primary" size="large" style="width:100%; height:48px; font-size:16px;" @click="submitBatch" :disabled="batchCount===0" :loading="submitting">
+                        确认记账 ({{ batchCount }}笔)
+                    </el-button>
+                </div>
+            </el-drawer>
+
+            <el-dialog v-model="showRoomManager" title="房间管理" width="90%" style="max-width:400px;" align-center>
+                <el-input v-model="newRoomName" placeholder="输入房号 (如: 101)" size="large" class="mb-4" @keyup.enter="handleAddNewRoom">
+                    <template #append><el-button @click="handleAddNewRoom">添加</el-button></template>
+                </el-input>
+                <div style="display:flex; flex-wrap:wrap; gap:8px; max-height:300px; overflow-y:auto;">
+                    <el-tag v-for="room in roomList" :key="room.id" closable size="large" type="info" @close="handleDeleteRoom(room)">{{ room.name }}</el-tag>
+                </div>
+            </el-dialog>
+        </div>
+    </script>
+
+    <style>
+        /* 补充样式 */
+        .label-text {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 6px;
+        }
+
+        .is-selected {
+            background-color: #eff6ff;
+            color: var(--primary);
+            font-weight: 700;
+            border: 1px solid var(--primary);
+        }
+    </style>
+
+    <script type="text/x-template" id="tmpl-analysis">
+        <div class="analysis-page">
+            <div style="display:flex; justify-content:space-between; align-items:end; margin-bottom:20px;">
+                <div><h2>数据分析</h2><p class="subtitle">营收与入住趋势</p></div>
+                <el-date-picker v-model="selectedMonth" type="month" placeholder="月份" :clearable="false" @change="loadData" style="width: 110px;" :editable="false" size="small" value-format="YYYY-MM"/>
+            </div>
+            <el-card shadow="never" class="mb-4" style="background: linear-gradient(135deg, #fff, #f0f7ff);">
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <div class="icon-box-lg" style="background:rgba(37,99,235,0.1); color:var(--primary); padding:12px; border-radius:12px;"><el-icon size="28"><Money /></el-icon></div>
+                    <div><div style="font-size:13px; color:#6b7280;">本月总营收</div><div class="sales-number" style="font-size:28px; font-weight:700; line-height:1.2;"><span style="font-size:16px;">¥</span>{{ totalSales.toLocaleString() }}</div></div>
+                </div>
+            </el-card>
+            <el-row :gutter="20">
+                <el-col :md="12" :xs="24">
+                    <el-card shadow="never" class="mb-4">
+                        <div slot="header" style="font-weight:600; margin-bottom:12px;">房间排行</div>
+                        <el-table :data="roomSales" stripe :show-header="false" empty-text="暂无数据"><el-table-column prop="room_name" /><el-table-column prop="total" align="right"><template #default="{row}"><b style="color:var(--text-main)">¥{{row.total}}</b></template></el-table-column></el-table>
+                    </el-card>
+                </el-col>
+                <el-col :md="12" :xs="24">
+                    <el-card shadow="never">
+                        <div slot="header" style="font-weight:600; margin-bottom:12px;">入住率 ({{daysInMonth}}天)</div>
+                        <div v-if="!roomSalesCount.length" style="text-align:center; padding:20px; color:#999;">暂无数据</div>
+                        <div v-for="item in roomSalesCount" :key="item.room_name" style="margin-bottom:16px;">
+                            <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;"><span>{{ item.room_name }}</span><span style="color:#6b7280;">{{ item.billCnt }}天 / {{ getProgressPercentage(item.billCnt) }}%</span></div>
+                            <el-progress :percentage="getProgressPercentage(item.billCnt)" :color="getProgressColor(item.billCnt)" :show-text="false" :stroke-width="8" />
+                        </div>
+                    </el-card>
+                </el-col>
+            </el-row>
+        </div>
+    </script>
+
+    <script type="text/x-template" id="tmpl-mine">
+        <div class="page-container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0;">我的概览</h2>
+                <el-date-picker 
+                    v-model="selectedMonth" 
+                    type="month" 
+                    placeholder="选择月份" 
+                    :clearable="false" 
+                    :editable="false" 
+                    size="default" 
+                    style="width: 120px;" 
+                    value-format="YYYY-MM"
+                    @change="load"
+                />
+            </div>
+            
+            <div style="background:var(--primary); color:#fff; border-radius:var(--radius); padding:24px; margin-bottom:20px; display:flex; align-items:center;">
+                <div style="flex:1;">
+                    <div style="opacity:0.8; font-size:13px; margin-bottom:4px;">{{ selectedMonth }} 总营收</div>
+                    <div style="font-size:32px; font-weight:700;">¥ {{ monthTotalSales || 0 }}</div>
+                </div>
+                <div style="background:rgba(255,255,255,0.2); width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                    <el-icon size="24"><Wallet /></el-icon>
+                </div>
+            </div>
+
+            <el-card shadow="never" class="mb-4">
+                <template #header>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>账单明细</span>
+                        <el-tag size="small" type="info">{{ monthlyOrders.length }} 笔</el-tag>
+                    </div>
+                </template>
+                
+                <el-table :data="monthlyOrders" height="400" style="width: 100%" empty-text="本月暂无数据" stripe>
+                    <el-table-column prop="date" label="日期" width="110">
+                         <template #default="{row}">
+                            <span style="color:#6b7280; font-size:13px; font-family:monospace;">{{row.date}}</span>
+                         </template>
+                    </el-table-column>
+                    
+                    <el-table-column prop="roomName" label="房号">
+                        <template #default="{row}">
+                            <span style="font-weight:500;">{{row.roomName}}</span>
+                        </template>
+                    </el-table-column>
+                    
+                    <el-table-column prop="sales" align="right" label="金额">
+                         <template #default="{row}">
+                            <b style="color:var(--primary)">+{{row.sales}}</b>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </el-card>
+            
+            <el-button type="danger" plain style="width:100%" @click="logout">退出登录</el-button>
+        </div>
+    </script>
+
+    <script>
+        const { createApp, ref, reactive, computed, onMounted, defineComponent } = Vue;
+        const { createRouter, createWebHashHistory, useRouter, useRoute } = VueRouter;
+        const { ElMessage, ElNotification, ElMessageBox } = ElementPlus;
+        const { User, Lock, Plus, Setting, Money, Wallet, DataLine, Calendar, House } = ElementPlusIconsVue;
+
+        // ========== 本地存储 ==========
+        const nativeStorage = {
+            getItem: (k) => { try { return JSON.parse(localStorage.getItem(k)) } catch (e) { return localStorage.getItem(k) } },
+            setItem: (k, v) => localStorage.setItem(k, typeof v === 'object' ? JSON.stringify(v) : v),
+            removeItem: (k) => localStorage.removeItem(k),
+            clear: () => localStorage.clear()
+        };
+
+        // ========== Axios (保持原样) ==========
+        const request = axios.create({ baseURL: 'http://113.44.173.24:8080/api', timeout: 3000 });
+        request.interceptors.request.use(config => {
+            const token = nativeStorage.getItem('token');
+            if (token) config.headers.token = token;
+            return config;
+        });
+        request.interceptors.response.use(
+            res => res.data,
+            err => {
+                if (err.response?.status === 401) {
+                    ElMessage.error('登录已过期'); localStorage.clear(); location.reload();
+                }
+                return Promise.reject(err);
+            }
+        );
+
+        // ========== API (保持原样) ==========
+        const api = {
+            login: (data) => request.post('/login', data),
+            getBillsByDate: (date) => request.get(`/bill/selectDate/${date}`),
+            addBill: (data) => request.post('/bill/setBill', data),
+            editBill: (data) => request.post('/bill/editBill', data),
+            deleteBill: (id) => request.delete(`/bill/deleteBill/${id}`),
+            roomList: () => request.get('/room/list'),
+            addRoom: (roomName) => request.post('/room/add', { roomName }),
+            deleteRoom: (id) => request.delete(`/room/delete/${id}`),
+            getMonthTotalSales: (ym) => request.get(`/analysis/monthTotalSales/${ym}`),
+            getMonthEveryTotalSales: (ym) => request.get(`/analysis/monthEveryTotalSales/${ym}`),
+            getSalesInMonth: (ym) => request.get(`/analysis/salesInMonth/${ym}`),
+            selectAllBills: () => request.get('/bill/selectAll')
+        };
+
+        // ========== 组件 ==========
+
+        const LoginComponent = defineComponent({
+            template: '#tmpl-login',
+            setup() {
+                const form = reactive({ username: '', password: '' });
+                const loading = ref(false);
+                const router = useRouter();
+                const handleLogin = async () => {
+                    if (!form.username || !form.password) return ElMessage.warning('请输入账号密码');
+                    loading.value = true;
+                    try {
+                        const res = await api.login(form);
+                        if (res.code === 200 && res.data?.token) {
+                            nativeStorage.setItem('token', res.data.token);
+                            ElNotification.success('登录成功'); router.replace('/');
+                        } else { ElMessage.error(res.message || '登录失败'); }
+                    } catch (e) { ElMessage.error(e.message || '网络异常'); } finally { loading.value = false; }
+                }
+                return { form, loading, handleLogin, User, Lock };
+            }
+        });
+
+        // --- OrderBook Component ---
+        const OrderBook = defineComponent({
+            template: '#tmpl-orderbook',
+            setup() {
+                const { Files } = ElementPlusIconsVue; // 引入新图标
+
+                // --- 基础状态 ---
+                const selectedDate = ref(new Date()); // 当前查看的日期对象
+                const bills = ref([]);
+                const roomList = ref(nativeStorage.getItem('my_room_list') || []);
+                const roomId = ref('');
+                const roomPrice = ref(80);
+
+                // --- 编辑与单条状态 ---
+                const isEdit = ref(false);
+                const editId = ref(null);
+                const submitting = ref(false);
+
+                // --- 批量记账状态 (新) ---
+                const showBatchDialog = ref(false);
+                const batchMode = ref('dates'); // 'dates' (多点) 或 'range' (范围)
+                const batchDates = ref([]);     // 存储多点日期数组
+                const batchRange = ref([]);     // 存储范围日期 [start, end]
+
+                // --- 辅助计算 ---
+                const pad = n => n.toString().padStart(2, '0');
+                // dateStr 用于单日记账和展示列表
+                const dateStr = computed(() => `${selectedDate.value.getFullYear()}-${pad(selectedDate.value.getMonth() + 1)}-${pad(selectedDate.value.getDate())}`);
+                const todayStr = `${new Date().getFullYear()}-${pad(new Date().getMonth() + 1)}-${pad(new Date().getDate())}`;
+
+                // 计算批量选中的天数
+                const batchCount = computed(() => {
+                    if (batchMode.value === 'dates') return batchDates.value ? batchDates.value.length : 0;
+                    if (batchMode.value === 'range' && batchRange.value && batchRange.value.length === 2) {
+                        const start = dayjs(batchRange.value[0]);
+                        const end = dayjs(batchRange.value[1]);
+                        return end.diff(start, 'day') + 1;
+                    }
+                    return 0;
+                });
+
+                // --- 方法 ---
+
+                const handleDateChange = () => {
+                    // 日历切换时，重置编辑状态，加载新日期数据
+                    isEdit.value = false;
+                    editId.value = null;
+                    loadBills();
+                }
+
+                const loadRooms = async () => {
+                    try {
+                        const res = await api.roomList();
+                        if (res.code === 200) {
+                            roomList.value = (res.data || []).map(r => ({ id: r.id, name: r.room_name || r.roomName || r.name }));
+                            nativeStorage.setItem('my_room_list', roomList.value);
+                        }
+                    } catch (e) { }
+                };
+
+                const loadBills = async () => {
+                    try {
+                        const res = await api.getBillsByDate(dateStr.value);
+                        bills.value = res.data || [];
+                    } catch (e) { }
+                };
+
+                const hasBill = (day) => {
+                    if (day === dateStr.value && bills.value.length > 0) return true;
+                    return false;
+                };
+
+                // 单条提交 (保持原逻辑)
+                const submitBill = async () => {
+                    if (!roomId.value) return ElMessage.warning('请选择房间');
+                    try {
+                        const payload = { date: dateStr.value, roomName: roomId.value, sales: roomPrice.value };
+                        if (isEdit.value) {
+                            const res = await api.editBill({ ...payload, id: editId.value });
+                            if (res.code === 200) ElMessage.success('修改成功');
+                            else ElMessage.error(res.message);
+                        } else {
+                            const res = await api.addBill(payload);
+                            if (res.code === 200) ElMessage.success('记账成功');
+                            else if (res.code === 409) ElMessage.error('该房间今日已记账');
+                            else ElMessage.error(res.message);
+                        }
+                        isEdit.value = false; editId.value = null;
+                        loadBills();
+                    } catch (e) { ElMessage.error('操作失败'); }
+                };
+
+                // --- 新增：批量提交逻辑 ---
+                const openBatchDialog = () => {
+                    showBatchDialog.value = true;
+                    batchDates.value = [];
+                    batchRange.value = [];
+                };
+
+                const submitBatch = async () => {
+                    if (!roomId.value) return ElMessage.warning('请选择房间');
+                    if (batchCount.value === 0) return ElMessage.warning('请选择日期');
+
+                    submitting.value = true;
+                    let targetDates = [];
+
+                    // 1. 计算所有需要记账的日期列表
+                    if (batchMode.value === 'dates') {
+                        targetDates = [...batchDates.value];
+                    } else {
+                        // 范围模式：生成中间所有日期
+                        let current = dayjs(batchRange.value[0]);
+                        const end = dayjs(batchRange.value[1]);
+                        while (current.isBefore(end) || current.isSame(end, 'day')) {
+                            targetDates.push(current.format('YYYY-MM-DD'));
+                            current = current.add(1, 'day');
+                        }
+                    }
+
+                    try {
+                        let successCount = 0;
+                        // 2. 并发请求
+                        const promises = targetDates.map(date => {
+                            return api.addBill({ date: date, roomName: roomId.value, sales: roomPrice.value })
+                                .then(res => {
+                                    if (res.code === 200) successCount++;
+                                    return res;
+                                });
+                        });
+
+                        await Promise.all(promises);
+
+                        if (successCount > 0) {
+                            ElMessage.success(`成功记入 ${successCount} 笔`);
+                            showBatchDialog.value = false; // 关闭弹窗
+                            loadBills(); // 刷新当前页面
+                        } else {
+                            ElMessage.warning('未能记入，可能选中的日期该房间已有账单');
+                        }
+                    } catch (e) {
+                        ElMessage.error('批量操作异常');
+                    } finally {
+                        submitting.value = false;
+                    }
+                };
+
+                // 其他辅助功能保持不变
+                const editBill = (row) => { isEdit.value = true; editId.value = row.id; roomId.value = row.roomName; roomPrice.value = row.sales; scrollToForm(); };
+                const removeBill = async (id) => { try { const res = await api.deleteBill(id); if (res.code === 200) { ElMessage.success('已删除'); loadBills(); } } catch (e) { } };
+                const cancelEdit = () => { isEdit.value = false; editId.value = null; roomPrice.value = 80; };
+
+                const showRoomManager = ref(false);
+                const newRoomName = ref('');
+                const openRoomManager = () => { showRoomManager.value = true; loadRooms(); };
+                const handleAddNewRoom = async () => { if (!newRoomName.value) return; try { const res = await api.addRoom(newRoomName.value); if (res.code === 200) { newRoomName.value = ''; loadRooms(); } else ElMessage.error(res.message); } catch (e) { } };
+                const handleDeleteRoom = async (r) => { try { await api.deleteRoom(r.id); loadRooms(); } catch (e) { } };
+                const scrollToForm = () => { document.getElementById('form-section')?.scrollIntoView({ behavior: 'smooth' }); };
+
+                onMounted(() => { loadRooms(); loadBills(); });
+
+                return {
+                    selectedDate, bills, roomList, roomId, roomPrice, isEdit, dateStr, todayStr,
+                    showRoomManager, newRoomName, Plus, Setting, Files,
+                    loadBills, submitBill, editBill, cancelEdit, removeBill,
+                    openRoomManager, handleAddNewRoom, handleDeleteRoom, hasBill, scrollToForm, handleDateChange,
+                    // 批量相关导出
+                    showBatchDialog, openBatchDialog, submitBatch, batchMode, batchDates, batchRange, batchCount, submitting
+                };
+            }
+        });
+
+        // --- Analysis 和 Mine 组件保持原逻辑 ---
+        const Analysis = defineComponent({
+            template: '#tmpl-analysis',
+            setup() {
+                const totalSales = ref(0); const roomSales = ref([]); const roomSalesCount = ref([]);
+                const selectedMonth = ref(dayjs().format('YYYY-MM'));
+                const daysInMonth = computed(() => dayjs(selectedMonth.value).daysInMonth());
+                const loadData = async () => {
+                    if (!selectedMonth.value) return;
+                    try {
+                        const [t, r, c] = await Promise.all([api.getMonthTotalSales(selectedMonth.value), api.getMonthEveryTotalSales(selectedMonth.value), api.getSalesInMonth(selectedMonth.value)]);
+                        totalSales.value = t.data || 0; roomSales.value = r.data || []; roomSalesCount.value = c.data || [];
+                    } catch (e) { }
+                };
+                const getProgressPercentage = (cnt) => Math.round((cnt / daysInMonth.value) * 100);
+                const getProgressColor = (cnt) => { const p = cnt / daysInMonth.value; return p >= 0.8 ? '#10b981' : p >= 0.5 ? '#f59e0b' : '#ef4444'; };
+                onMounted(loadData);
+                return { totalSales, roomSales, roomSalesCount, selectedMonth, daysInMonth, loadData, getProgressPercentage, getProgressColor, Money };
+            }
+        });
+
+        // --- Mine Component (我的) ---
+        const Mine = defineComponent({
+            template: '#tmpl-mine',
+            setup() {
+                const monthlyOrders = ref([]);
+                const monthTotalSales = ref(0);
+                // 新增：选中月份，默认为当前月
+                const selectedMonth = ref(dayjs().format('YYYY-MM'));
+                const router = useRouter();
+
+                const load = async () => {
+                    const ym = selectedMonth.value;
+                    try {
+                        // 并行请求：所有账单 + 当月总额
+                        const [o, t] = await Promise.all([
+                            api.selectAllBills(),
+                            api.getMonthTotalSales(ym)
+                        ]);
+
+                        // 1. 处理总额
+                        monthTotalSales.value = t.data || 0;
+
+                        // 2. 处理列表：前端过滤出当前选中月份的数据
+                        const allBills = o.data || [];
+
+                        // 过滤逻辑：保留 date 字段以 "YYYY-MM" 开头的记录
+                        const filteredBills = allBills.filter(bill => {
+                            return bill.date && bill.date.startsWith(ym);
+                        });
+
+                        // 排序逻辑：按日期降序排列 (最新的在最上面)
+                        filteredBills.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                        monthlyOrders.value = filteredBills;
+
+                    } catch (e) {
+                        console.error("加载失败", e);
+                        // 即使失败也要清空数据，防止显示错误的旧数据
+                        monthlyOrders.value = [];
+                        monthTotalSales.value = 0;
+                    }
+                };
+
+                const logout = () => {
+                    localStorage.clear();
+                    router.replace('/login');
+                }
+
+                // 页面加载时执行
+                onMounted(load);
+
+                return {
+                    monthlyOrders,
+                    monthTotalSales,
+                    selectedMonth, // 导出给模板使用
+                    load,          // 导出给日期选择器 change 事件使用
+                    Wallet,
+                    logout
+                };
+            }
+        });
+
+        const App = defineComponent({
+            setup() {
+                const route = useRoute(); const router = useRouter();
+                const tabs = [{ key: 'home', title: '记账', icon: 'Calendar' }, { key: 'analysis', title: '统计', icon: 'DataLine' }, { key: 'mine', title: '我的', icon: 'User' }];
+                const activeTab = computed(() => route.name || 'home');
+                const showTabBar = computed(() => route.name !== 'login');
+                const switchTab = (t) => router.push({ name: t.key });
+                return { tabs, activeTab, switchTab, showTabBar };
+            }
+        });
+
+        const router = createRouter({
+            history: createWebHashHistory(),
+            routes: [{ path: '/login', name: 'login', component: LoginComponent }, { path: '/', name: 'home', component: OrderBook }, { path: '/analysis', name: 'analysis', component: Analysis }, { path: '/mine', name: 'mine', component: Mine }]
+        });
+        router.beforeEach((to, from, next) => {
+            const token = nativeStorage.getItem('token');
+            if (['login'].includes(to.name)) { if (token) return next({ path: '/' }); return next(); }
+            if (!token) return next({ name: 'login' });
+            next();
+        });
+
+        const app = createApp(App);
+        for (const [k, v] of Object.entries(ElementPlusIconsVue)) app.component(k, v);
+        app.use(ElementPlus, { locale: ElementPlusLocaleZhCn });
+        app.use(router);
+        app.mount('#app');
+    </script>
+</body>
+
 </html>
