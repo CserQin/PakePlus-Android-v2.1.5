@@ -250,15 +250,15 @@
     <script src="https://unpkg.com/@element-plus/icons-vue"></script>
     <script src="https://unpkg.com/element-plus/dist/locale/zh-cn.js"></script>
     <script src="https://unpkg.com/dayjs/dayjs.min.js"></script> -->
-<script src="./vue.global.js"></script>
-<script src="./vue-router.global.js"></script>
-<script src="./axios.min.js"></script>
-<script src="./dayjs.min.js"></script>
-<link rel="stylesheet" href="./index.css" />
-<!-- Element-Plus 主包 + 中文语言包 + 图标 -->
-<script src="./element-plus-2.13.0-dist-index.full.js.js"></script>
-<script src="./element-plus-2.13.0-dist-locale-zh-cn.js"></script>
-<script src="./element-plus-icons-vue@2.3.2.js"></script>
+    <script src="./vue.global.js"></script>
+    <script src="./vue-router.global.js"></script>
+    <script src="./axios.min.js"></script>
+    <script src="./dayjs.min.js"></script>
+    <link rel="stylesheet" href="./index.css" />
+    <!-- Element-Plus 主包 + 中文语言包 + 图标 -->
+    <script src="./element-plus-2.13.0-dist-index.full.js.js"></script>
+    <script src="./element-plus-2.13.0-dist-locale-zh-cn.js"></script>
+    <script src="./element-plus-icons-vue@2.3.2.js"></script>
     <script type="text/x-template" id="tmpl-login">
         <div class="login-wrapper">
             <div class="login-box">
@@ -374,7 +374,7 @@
                             <div>
                                 <div class="label-text">房间</div>
                                 <div style="display:flex; gap:8px;">
-                                    <el-select v-model="roomId" placeholder="选择房间" style="flex:1" filterable>
+                                    <el-select v-model="roomId" placeholder="选择房间" style="flex:1"  :clearable="false">
                                         <el-option v-for="r in roomList" :key="r.id" :label="r.name" :value="r.name" />
                                     </el-select>
                                     <el-button :icon="Setting" @click="openRoomManager" plain></el-button>
@@ -401,7 +401,7 @@
                             <el-table-column width="80" align="right">
                                 <template #default="{ row }">
                                     <el-button link type="primary" size="small" @click="editBill(row)">改</el-button>
-                                    <el-button link type="danger" size="small" @click="removeBill(row.id)">删</el-button>
+                                    <el-button link type="danger" size="small" @click="handleRemove(row.id)">删</el-button>
                                 </template>
                             </el-table-column>
                         </el-table>
@@ -585,7 +585,7 @@
                     </el-table-column>
                 </el-table>
             </el-card>
-            
+            <br>
             <el-button type="danger" plain style="width:100%" @click="logout">退出登录</el-button>
         </div>
     </script>
@@ -809,6 +809,19 @@
                 // 其他辅助功能保持不变
                 const editBill = (row) => { isEdit.value = true; editId.value = row.id; roomId.value = row.roomName; roomPrice.value = row.sales; scrollToForm(); };
                 const removeBill = async (id) => { try { const res = await api.deleteBill(id); if (res.code === 200) { ElMessage.success('已删除'); loadBills(); } } catch (e) { } };
+                const handleRemove = (id) => {
+                    ElMessageBox.confirm(
+                        '确定要删除这条账单吗？',
+                        '提示',
+                        {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消',
+                            type: 'warning'
+                        }
+                    )
+                        .then(() => removeBill(id))   // 用户点了“确定”
+                        .catch(() => { })              // 点“取消”或关闭，静默忽略
+                }
                 const cancelEdit = () => { isEdit.value = false; editId.value = null; roomPrice.value = 80; };
 
                 const showRoomManager = ref(false);
@@ -823,7 +836,7 @@
                 return {
                     selectedDate, bills, roomList, roomId, roomPrice, isEdit, dateStr, todayStr,
                     showRoomManager, newRoomName, Plus, Setting, Files,
-                    loadBills, submitBill, editBill, cancelEdit, removeBill,
+                    loadBills, submitBill, editBill, cancelEdit, removeBill,handleRemove,
                     openRoomManager, handleAddNewRoom, handleDeleteRoom, hasBill, scrollToForm, handleDateChange,
                     // 批量相关导出
                     showBatchDialog, openBatchDialog, submitBatch, batchMode, batchDates, batchRange, batchCount, submitting
